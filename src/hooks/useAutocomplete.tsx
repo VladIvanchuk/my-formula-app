@@ -19,18 +19,32 @@ async function fetchSuggestions(query: string): Promise<AutocompleteItem[]> {
 
   const data: AutocompleteItem[] = await res.json();
 
-  // Фільтрування за назвою
-  const filtered = data.filter((item) =>
+  const filteredByName = data.filter((item) =>
     item.name.toLowerCase().includes(query.toLowerCase())
   );
 
-  return filtered;
+  const unique = getUniqueById(filteredByName);
+
+  return unique;
+}
+
+function getUniqueById(items: AutocompleteItem[]): AutocompleteItem[] {
+  const seen = new Set<string>();
+  const result: AutocompleteItem[] = [];
+
+  for (const item of items) {
+    if (!seen.has(item.id)) {
+      seen.add(item.id);
+      result.push(item);
+    }
+  }
+  return result;
 }
 
 export function useAutocomplete(query: string) {
   return useQuery({
     queryKey: ["autocomplete", query],
     queryFn: () => fetchSuggestions(query),
-    enabled: Boolean(query), // виконується тільки, якщо query непорожнє
+    enabled: Boolean(query),
   });
 }

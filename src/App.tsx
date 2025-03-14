@@ -1,9 +1,10 @@
 import "./App.css";
+import { MyFormulaEditor } from "./components/MyFormulaEditor";
 
 function App() {
   return (
     <>
-      <p>Hello</p>
+      <MyFormulaEditor />
     </>
   );
 }
