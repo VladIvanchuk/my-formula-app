@@ -1,56 +1,18 @@
 import React, {
   useCallback,
-  useMemo,
-  useState,
   useEffect,
+  useMemo,
   useRef,
+  useState,
 } from "react";
-import {
-  createEditor,
-  Descendant,
-  Editor,
-  Transforms,
-  Range,
-  BaseEditor,
-} from "slate";
-import { Slate, Editable, withReact, ReactEditor } from "slate-react";
+import { createEditor, Descendant, Editor, Range, Transforms } from "slate";
 import { withHistory } from "slate-history";
+import { Editable, ReactEditor, Slate, withReact } from "slate-react";
 import { useAutocomplete } from "../hooks/useAutocomplete";
 import { useEditorStore } from "../store/editorStore";
+import { MentionElementType } from "../types";
 import { renderElement } from "./renderElement";
-
-// Типи для Slate
-type CustomElement = ParagraphElement | MentionElement;
-type ParagraphElement = { type: "paragraph"; children: CustomText[] };
-type MentionElement = {
-  type: "mention";
-  value: string;
-  children: CustomText[];
-};
-
-type CustomText = { text: string };
-
-declare module "slate" {
-  interface CustomTypes {
-    Editor: BaseEditor & ReactEditor;
-    Element: CustomElement;
-    Text: CustomText;
-  }
-}
-
-const withMentions = (editor: Editor) => {
-  const { isVoid, isInline } = editor;
-
-  editor.isVoid = (element) => {
-    return element.type === "mention" ? true : isVoid(element);
-  };
-
-  editor.isInline = (element) => {
-    return element.type === "mention" ? true : isInline(element);
-  };
-
-  return editor;
-};
+import { withMentions } from "../utils/withMentions";
 
 export const MyFormulaEditor: React.FC = () => {
   const editor = useMemo(
@@ -63,7 +25,6 @@ export const MyFormulaEditor: React.FC = () => {
   const { data: suggestions = [] } = useAutocomplete(searchText);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // При першому рендері можна сфокусувати редактор
   useEffect(() => {
     ReactEditor.focus(editor);
   }, [editor]);
@@ -106,7 +67,7 @@ export const MyFormulaEditor: React.FC = () => {
       Transforms.select(editor, targetRange);
       Transforms.delete(editor);
 
-      const mentionNode: MentionElement = {
+      const mentionNode: MentionElementType = {
         type: "mention",
         value: mentionName,
         children: [{ text: "" }],
@@ -114,10 +75,8 @@ export const MyFormulaEditor: React.FC = () => {
 
       Transforms.insertNodes(editor, mentionNode);
 
-      // Додаємо порожній текст після тегу
       Transforms.insertText(editor, " ");
 
-      // Оновлюємо селекшн
       Transforms.move(editor);
       ReactEditor.focus(editor);
 
@@ -147,7 +106,6 @@ export const MyFormulaEditor: React.FC = () => {
           }}
           placeholder="Type your formula..."
           onKeyDown={(event) => {
-            // Якщо Enter і є підказки, вставити першу
             if (event.key === "Enter" && suggestions.length > 0 && searchText) {
               event.preventDefault();
               insertMention(suggestions[0].name);
@@ -162,12 +120,10 @@ export const MyFormulaEditor: React.FC = () => {
         (() => {
           if (!containerRef.current) return null;
 
-          // Отримуємо позицію курсору
           const domRange = ReactEditor.toDOMRange(editor, targetRange);
           const rect = domRange.getBoundingClientRect();
           const containerRect = containerRef.current.getBoundingClientRect();
 
-          // Розраховуємо позицію відносно контейнера
           const top =
             rect.bottom -
             containerRect.top +

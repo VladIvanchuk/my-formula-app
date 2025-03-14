@@ -1,7 +1,7 @@
 import { BaseEditor } from "slate";
 import { ReactEditor } from "slate-react";
 
-type CustomText = { text: string };
+export type CustomText = { text: string };
 
 export type CustomElement = ParagraphElement | MentionElementType;
 
